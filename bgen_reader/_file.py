@@ -24,7 +24,7 @@ def find_cache_filepath(bgen_filepath):
     bgen_filepath = _make_sure_unicode(bgen_filepath)
     base = _make_sure_unicode(basename(bgen_filepath))
     name = "." + base + ".idx"
-    folders = [abspath(bgen_filepath), expanduser('~'), getcwd()]
+    folders = [abspath(dirname(bgen_filepath)), expanduser('~'), getcwd()]
     cands = [join(d, name) for d in folders]
     try:
         f = next(x for x in cands if exists(x) or access(dirname(x), W_OK))

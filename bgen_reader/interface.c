@@ -3,59 +3,68 @@
 
 #include "bgen/bgen.h"
 
-BGenFile* open_bgen(const byte* filepath)
+struct BGenVI;
+struct BGenVG;
+
+struct BGenFile* open_bgen(const byte* filepath)
 {
     return bgen_open(filepath);
 }
 
-void close_bgen(BGenFile* bgen)
+void close_bgen(struct BGenFile* bgen)
 {
     bgen_close(bgen);
 }
 
-inti get_nsamples(BGenFile* bgen)
+inti get_nsamples(struct BGenFile* bgen)
 {
     return bgen_nsamples(bgen);
 }
 
-inti get_nvariants(BGenFile* bgen)
+inti get_nvariants(struct BGenFile* bgen)
 {
     return bgen_nvariants(bgen);
 }
 
-string* read_samples(BGenFile* bgen)
+string* read_samples(struct BGenFile* bgen)
 {
     return bgen_read_samples(bgen);
 }
 
-void free_samples(const BGenFile* bgen,
+void free_samples(const struct BGenFile* bgen,
     string* samples)
 {
     bgen_free_samples(bgen, samples);
 }
 
-struct BGenVar* load_variants(BGenFile* bgen,
+inti store_variants(const struct BGenFile* bgen, struct BGenVar* v,
+    struct BGenVI* i, const byte* fp)
+{
+    return bgen_store_variants(bgen, v, i, fp);
+}
+
+struct BGenVar* load_variants(struct BGenFile* bgen,
     const byte* cache_filepath,
     struct BGenVI** index)
 {
     return bgen_load_variants(bgen, cache_filepath, index);
 }
 
-struct BGenVar* read_variants(BGenFile* bgen,
+struct BGenVar* read_variants(struct BGenFile* bgen,
     struct BGenVI** index)
 {
     return bgen_read_variants(bgen, index);
 }
 
-void free_variants(const BGenFile* bgen,
+void free_variants(const struct BGenFile* bgen,
     struct BGenVar* variants)
 {
     bgen_free_variants(bgen, variants);
 }
 
-void free_indexing(struct BGenVI* index)
+void free_index(struct BGenVI* index)
 {
-    return bgen_free_indexing(index);
+    bgen_free_index(index);
 }
 
 struct BGenVG* open_variant_genotype(struct BGenVI* index,
@@ -102,7 +111,7 @@ string string_duplicate(string s)
     return r;
 }
 
-inti sample_ids_presence(BGenFile* bgen)
+inti sample_ids_presence(struct BGenFile* bgen)
 {
     return bgen_sample_ids_presence(bgen);
 }

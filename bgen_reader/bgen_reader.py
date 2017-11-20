@@ -19,7 +19,7 @@ from ._ffi.lib import (
     close_bgen, close_variant_genotype, get_ncombs, get_nsamples,
     get_nvariants, open_bgen, open_variant_genotype, read_samples,
     read_variant_genotype, read_variants, sample_ids_presence,
-    string_duplicate
+    string_duplicate, load_variants, store_variants
 )
 
 dask.set_options(pool=ThreadPool(cpu_count()))
@@ -37,10 +37,31 @@ def _to_string(v):
     return ffi.string(v.str, v.len).decode()
 
 
-def _read_variants(bgenfile, cache_filepath):
-    indexing = ffi.new("VariantIndexing *[1]")
+def _to_bytes(v):
+    try:
+        return v.encode()
+    except AttributeError:
+        pass
+    return v
+
+
+def _read_variants(bgenfile, cache_filepath, cache):
+    indexing = ffi.new("struct BGenVI *[1]")
     nvariants = get_nvariants(bgenfile)
-    variants = read_variants(bgenfile, indexing, cache_filepath)
+
+    if cache_filepath is not None:
+        cache_filepath = _to_bytes(cache_filepath)
+
+    if cache:
+        if cache_filepath is None:
+            variants = read_variants(bgenfile, indexing)
+        elif os.path.exists(cache_filepath):
+            variants = load_variants(bgenfile, cache_filepath, indexing)
+        else:
+            variants = read_variants(bgenfile, indexing)
+            store_variants(bgenfile, variants, indexing[0], cache_filepath)
+    else:
+        variants = read_variants(bgenfile, indexing)
 
     data = dict(id=[], rsid=[], chrom=[], pos=[], nalleles=[], allele_ids=[])
     for i in range(nvariants):
@@ -129,7 +150,7 @@ def _read_genotype(indexing, nsamples, nvariants, nalleless, size, verbose):
     return da.concatenate(genotype)
 
 
-def read_bgen(filepath, size=50, verbose=True):
+def read_bgen(filepath, size=50, verbose=True, cache=True):
     r"""Read a given BGEN file.
 
     Args
@@ -140,6 +161,10 @@ def read_bgen(filepath, size=50, verbose=True):
         Chunk size in megabytes. Defaults to ``50``.
     verbose : bool
         ``True`` to show progress; ``False`` otherwise.
+    cache : bool
+        ``True`` to use cache; ``False`` otherwise. It keeps a persistent
+        storage of the corresponding variant index to speed-up subsequent
+        file loading. Defaults to ``True``.
 
     Returns
     -------
@@ -164,12 +189,15 @@ def read_bgen(filepath, size=50, verbose=True):
         msg += " permission for reading {}.".format(filepath)
         raise RuntimeError(msg)
 
-    try:
-        cache_filepath = find_cache_filepath(filepath)
-    except FileNotFoundError:
-        msg = "Could not find an unobtrusive file path for storing"
-        msg += " variants index. Proceeding without one."
-        print(msg)
+    if cache:
+        try:
+            cache_filepath = find_cache_filepath(filepath)
+        except FileNotFoundError:
+            msg = "Could not find an unobtrusive file path for storing"
+            msg += " variants index. Proceeding without one."
+            print(msg)
+            cache_filepath = None
+    else:
         cache_filepath = None
 
     bgenfile = open_bgen(filepath)
@@ -186,11 +214,17 @@ def read_bgen(filepath, size=50, verbose=True):
     else:
         samples = _read_samples(bgenfile)
 
-    sys.stdout.write("Reading variants (it should take less than a minute)...")
-    sys.stdout.flush()
-    variants, indexing = _read_variants(bgenfile, cache_filepath)
-    sys.stdout.write(" done.\n")
-    sys.stdout.flush()
+    if verbose:
+        sys.stdout.write(
+            "Reading variants (it should take less than a minute)...")
+        sys.stdout.flush()
+
+    variants, indexing = _read_variants(bgenfile, cache_filepath, cache)
+
+    if verbose:
+        sys.stdout.write(" done.\n")
+        sys.stdout.flush()
+
     nalleless = variants['nalleles'].values
 
     nsamples = samples.shape[0]

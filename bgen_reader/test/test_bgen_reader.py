@@ -14,10 +14,10 @@ except NameError:
     FileNotFoundError = IOError
 
 
-def test_bgen_reader():
+def _do_bgen_reader(cache):
     folder = os.path.dirname(os.path.abspath(__file__)).encode()
     filepath = os.path.join(folder, b"example.32bits.bgen")
-    bgen = read_bgen(filepath, verbose=False)
+    bgen = read_bgen(filepath, verbose=False, cache=cache)
     variants = bgen['variants']
     samples = bgen['samples']
     genotype = bgen['genotype']
@@ -51,12 +51,14 @@ def test_bgen_reader():
     assert_equal(samples.loc[n - 1, 'id'], 'sample_500')
 
 
-def test_bgen_cache():
-    folder = os.path.dirname(os.path.abspath(__file__)).encode()
-    filepath = os.path.join(folder, b"example.32bits.bgen")
-    cache_filepath = find_cache_filepath(filepath)
-    print(cache_filepath)
-    # bgen = read_bgen(filepath, verbose=False)
+def test_bgen_reader_without_cache():
+    _do_bgen_reader(False)
+    _do_bgen_reader(False)
+
+
+def test_bgen_reader_with_cache():
+    _do_bgen_reader(True)
+    _do_bgen_reader(True)
 
 
 def test_bgen_reader_file_notfound():
