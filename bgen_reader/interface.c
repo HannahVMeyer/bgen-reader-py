@@ -34,60 +34,60 @@ void free_samples(const BGenFile* bgen,
     bgen_free_samples(bgen, samples);
 }
 
-Variant* load_variants(BGenFile* bgen,
+struct BGenVar* load_variants(BGenFile* bgen,
     const byte* cache_filepath,
-    VariantIndexing** index)
+    struct BGenVI** index)
 {
     return bgen_load_variants(bgen, cache_filepath, index);
 }
 
-Variant* read_variants(BGenFile* bgen,
-    VariantIndexing** index)
+struct BGenVar* read_variants(BGenFile* bgen,
+    struct BGenVI** index)
 {
     return bgen_read_variants(bgen, index);
 }
 
 void free_variants(const BGenFile* bgen,
-    Variant* variants)
+    struct BGenVar* variants)
 {
     bgen_free_variants(bgen, variants);
 }
 
-void free_indexing(VariantIndexing* index)
+void free_indexing(struct BGenVI* index)
 {
     return bgen_free_indexing(index);
 }
 
-VariantGenotype* open_variant_genotype(VariantIndexing* index,
+struct BGenVG* open_variant_genotype(struct BGenVI* index,
     inti variant_idx)
 {
     return bgen_open_variant_genotype(index, variant_idx);
 }
 
-void read_variant_genotype(VariantIndexing* index,
-    VariantGenotype* vg,
+void read_variant_genotype(struct BGenVI* index,
+    struct BGenVG* vg,
     real* probabilities)
 {
     bgen_read_variant_genotype(index, vg, probabilities);
 }
 
-inti get_nalleles(VariantGenotype* vg)
+inti get_nalleles(struct BGenVG* vg)
 {
     return bgen_nalleles(vg);
 }
 
-inti get_ploidy(VariantGenotype* vg)
+inti get_ploidy(struct BGenVG* vg)
 {
     return bgen_ploidy(vg);
 }
 
-inti get_ncombs(VariantGenotype* vg)
+inti get_ncombs(struct BGenVG* vg)
 {
     return bgen_ncombs(vg);
 }
 
-void close_variant_genotype(VariantIndexing* index,
-    VariantGenotype* vg)
+void close_variant_genotype(struct BGenVI* index,
+    struct BGenVG* vg)
 {
     bgen_close_variant_genotype(index, vg);
 }
