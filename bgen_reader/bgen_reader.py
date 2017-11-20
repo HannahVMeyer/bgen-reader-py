@@ -12,6 +12,7 @@ from numpy import empty, float64, zeros
 from tqdm import tqdm
 
 from pandas import DataFrame
+from ._file import find_cache_filepath
 
 from ._ffi import ffi
 from ._ffi.lib import (
@@ -36,10 +37,10 @@ def _to_string(v):
     return ffi.string(v.str, v.len).decode()
 
 
-def _read_variants(bgenfile):
+def _read_variants(bgenfile, cache_filepath):
     indexing = ffi.new("VariantIndexing *[1]")
     nvariants = get_nvariants(bgenfile)
-    variants = read_variants(bgenfile, indexing)
+    variants = read_variants(bgenfile, indexing, cache_filepath)
 
     data = dict(id=[], rsid=[], chrom=[], pos=[], nalleles=[], allele_ids=[])
     for i in range(nvariants):
@@ -163,6 +164,14 @@ def read_bgen(filepath, size=50, verbose=True):
         msg += " permission for reading {}.".format(filepath)
         raise RuntimeError(msg)
 
+    try:
+        cache_filepath = find_cache_filepath(filepath)
+    except FileNotFoundError:
+        msg = "Could not find an unobtrusive file path for storing"
+        msg += " variants index. Proceeding without one."
+        print(msg)
+        cache_filepath = None
+
     bgenfile = open_bgen(filepath)
     if bgenfile == ffi.NULL:
         raise RuntimeError("Could not read {}.".format(filepath))
@@ -179,7 +188,7 @@ def read_bgen(filepath, size=50, verbose=True):
 
     sys.stdout.write("Reading variants (it should take less than a minute)...")
     sys.stdout.flush()
-    variants, indexing = _read_variants(bgenfile)
+    variants, indexing = _read_variants(bgenfile, cache_filepath)
     sys.stdout.write(" done.\n")
     sys.stdout.flush()
     nalleless = variants['nalleles'].values

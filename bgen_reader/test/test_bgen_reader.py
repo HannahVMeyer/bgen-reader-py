@@ -6,7 +6,7 @@ import pytest
 from numpy import array
 from numpy.testing import assert_allclose, assert_equal
 
-from bgen_reader import convert_to_dosage, read_bgen
+from bgen_reader import convert_to_dosage, read_bgen, find_cache_filepath
 
 try:
     FileNotFoundError
@@ -49,6 +49,14 @@ def test_bgen_reader():
 
     n = samples.shape[0]
     assert_equal(samples.loc[n - 1, 'id'], 'sample_500')
+
+
+def test_bgen_cache():
+    folder = os.path.dirname(os.path.abspath(__file__)).encode()
+    filepath = os.path.join(folder, b"example.32bits.bgen")
+    cache_filepath = find_cache_filepath(filepath)
+    print(cache_filepath)
+    # bgen = read_bgen(filepath, verbose=False)
 
 
 def test_bgen_reader_file_notfound():
