@@ -6,7 +6,7 @@
 struct BGenVI;
 struct BGenVG;
 
-struct BGenFile* open_bgen(const byte* filepath)
+struct BGenFile* open_bgen(const char* filepath)
 {
     return bgen_open(filepath);
 }
@@ -16,12 +16,12 @@ void close_bgen(struct BGenFile* bgen)
     bgen_close(bgen);
 }
 
-inti get_nsamples(struct BGenFile* bgen)
+int get_nsamples(struct BGenFile* bgen)
 {
     return bgen_nsamples(bgen);
 }
 
-inti get_nvariants(struct BGenFile* bgen)
+int get_nvariants(struct BGenFile* bgen)
 {
     return bgen_nvariants(bgen);
 }
@@ -37,17 +37,17 @@ void free_samples(const struct BGenFile* bgen,
     bgen_free_samples(bgen, samples);
 }
 
-inti store_variants(const struct BGenFile* bgen, struct BGenVar* v,
-    struct BGenVI* i, const byte* fp)
+int store_variants(const struct BGenFile* bgen, struct BGenVar* v,
+    struct BGenVI* i, const char* fp)
 {
     return bgen_store_variants(bgen, v, i, fp);
 }
 
 struct BGenVar* load_variants(struct BGenFile* bgen,
-    const byte* cache_filepath,
-    struct BGenVI** index)
+    const char* cache_filepath,
+    struct BGenVI** index, int verbose)
 {
-    return bgen_load_variants(bgen, cache_filepath, index);
+    return bgen_load_variants(bgen, cache_filepath, index, verbose);
 }
 
 struct BGenVar* read_variants(struct BGenFile* bgen,
@@ -68,29 +68,29 @@ void free_index(struct BGenVI* index)
 }
 
 struct BGenVG* open_variant_genotype(struct BGenVI* index,
-    inti variant_idx)
+    int variant_idx)
 {
     return bgen_open_variant_genotype(index, variant_idx);
 }
 
 void read_variant_genotype(struct BGenVI* index,
     struct BGenVG* vg,
-    real* probabilities)
+    double* probabilities)
 {
     bgen_read_variant_genotype(index, vg, probabilities);
 }
 
-inti get_nalleles(struct BGenVG* vg)
+int get_nalleles(struct BGenVG* vg)
 {
     return bgen_nalleles(vg);
 }
 
-inti get_ploidy(struct BGenVG* vg)
+int get_ploidy(struct BGenVG* vg)
 {
     return bgen_ploidy(vg);
 }
 
-inti get_ncombs(struct BGenVG* vg)
+int get_ncombs(struct BGenVG* vg)
 {
     return bgen_ncombs(vg);
 }
@@ -111,7 +111,7 @@ string string_duplicate(string s)
     return r;
 }
 
-inti sample_ids_presence(struct BGenFile* bgen)
+int sample_ids_presence(struct BGenFile* bgen)
 {
     return bgen_sample_ids_presence(bgen);
 }

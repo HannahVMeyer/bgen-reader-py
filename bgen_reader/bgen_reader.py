@@ -45,9 +45,14 @@ def _to_bytes(v):
     return v
 
 
-def _read_variants(bgenfile, cache_filepath, cache):
+def _read_variants(bgenfile, cache_filepath, cache, verbose):
     indexing = ffi.new("struct BGenVI *[1]")
     nvariants = get_nvariants(bgenfile)
+
+    if verbose:
+        verbose = 1
+    else:
+        verbose = 0
 
     if cache_filepath is not None:
         cache_filepath = _to_bytes(cache_filepath)
@@ -56,7 +61,8 @@ def _read_variants(bgenfile, cache_filepath, cache):
         if cache_filepath is None:
             variants = read_variants(bgenfile, indexing)
         elif os.path.exists(cache_filepath):
-            variants = load_variants(bgenfile, cache_filepath, indexing)
+            variants = load_variants(bgenfile, cache_filepath, indexing,
+                                     verbose)
         else:
             variants = read_variants(bgenfile, indexing)
             store_variants(bgenfile, variants, indexing[0], cache_filepath)
@@ -113,7 +119,7 @@ class ReadGenotypeVariant(object):
             ncombss.append(ncombs)
             g = empty((nsamples, ncombs), dtype=float64)
 
-            pg = ffi.cast("real *", g.ctypes.data)
+            pg = ffi.cast("double *", g.ctypes.data)
             read_variant_genotype(self._indexing[0], vg, pg)
 
             close_variant_genotype(self._indexing[0], vg)
@@ -133,7 +139,7 @@ def _read_genotype(indexing, nsamples, nvariants, nalleless, size, verbose):
     genotype = []
     rgv = ReadGenotypeVariant(indexing)
 
-    c = int((1024 * 1024 * size / 8) // nsamples)
+    c = int((1024 * 1024 * size) // nsamples)
     step = min(c, nvariants)
     tqdm_kwds = dict(desc='Variant mapping', disable=not verbose)
 
@@ -219,7 +225,8 @@ def read_bgen(filepath, size=50, verbose=True, cache=True):
             "Reading variants (it should take less than a minute)...")
         sys.stdout.flush()
 
-    variants, indexing = _read_variants(bgenfile, cache_filepath, cache)
+    variants, indexing = _read_variants(bgenfile, cache_filepath, cache,
+                                        verbose)
 
     if verbose:
         sys.stdout.write(" done.\n")

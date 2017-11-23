@@ -16,7 +16,7 @@ from .bgen_reader import convert_to_dosage, read_bgen
 from ._file import find_cache_filepath
 
 __name__ = "bgen-reader"
-__version__ = "1.0.2-a0"
+__version__ = "1.0.2-b0"
 __author__ = "Danilo Horta"
 __author_email__ = "horta@ebi.ac.uk"
 
