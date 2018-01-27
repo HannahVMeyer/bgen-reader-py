@@ -23,13 +23,13 @@ int get_nsamples(struct BGenFile* bgen);
 
 int get_nvariants(struct BGenFile* bgen);
 
-string* read_samples(struct BGenFile* bgen);
+string* read_samples(struct BGenFile* bgen, int verbose);
 
 void free_samples(const struct BGenFile* bgen,
     string* samples);
 
 struct BGenVar* read_variants(struct BGenFile* bgen,
-    struct BGenVI** index);
+    struct BGenVI** index, int verbose);
 
 int store_variants(const struct BGenFile*, struct BGenVar*, struct BGenVI*,
     const char*);

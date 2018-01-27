@@ -1,12 +1,12 @@
 from __future__ import unicode_literals
 
 import os
-
+from os.path import join
 import pytest
 from numpy import array
 from numpy.testing import assert_allclose, assert_equal
-
-from bgen_reader import convert_to_dosage, read_bgen, find_cache_filepath
+from bgen_reader import convert_to_dosage, read_bgen
+from ._support import download, url_filename, filehash, TmpDir, extract
 
 try:
     FileNotFoundError
@@ -20,7 +20,6 @@ def _do_bgen_reader(cache):
     bgen = read_bgen(filepath, verbose=False, cache=cache)
     variants = bgen['variants']
     samples = bgen['samples']
-    genotype = bgen['genotype']
 
     assert_equal(variants.loc[0, 'chrom'], '01')
     assert_equal(variants.loc[0, 'id'], 'SNPID_2')
@@ -75,3 +74,16 @@ def test_bgen_reader_convert_to_dosage():
     genotype = bgen['genotype']
     dosage = convert_to_dosage(genotype, verbose=False)
     assert_allclose(dosage[0, 1:3], array([1.93575854, 1.91558579]), rtol=1e-5)
+
+
+def test_bgen_reader_chr21():
+    h = "a66b681bcdad14083c5cc5b603201a3f5934028629bb9d0449a072ce62bf7f77"
+    url = "https://s3.eu-west-2.amazonaws.com/bgen-examples/chr21.bgen.bz2"
+    with TmpDir() as fld:
+        download(url, fld)
+        fp = join(fld, url_filename(url))
+        if filehash(fp) != h:
+            raise RuntimeError("File hash mismatch.")
+        extract(fp, verbose=False)
+        fp = fp[:-4]
+        read_bgen(fp, verbose=True)

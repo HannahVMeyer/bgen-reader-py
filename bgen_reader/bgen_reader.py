@@ -19,8 +19,7 @@ from ._ffi.lib import (
     close_bgen, close_variant_genotype, get_ncombs, get_nsamples,
     get_nvariants, open_bgen, open_variant_genotype, read_samples,
     read_variant_genotype, read_variants, sample_ids_presence,
-    string_duplicate, load_variants, store_variants
-)
+    string_duplicate, load_variants, store_variants)
 
 dask.set_options(pool=ThreadPool(cpu_count()))
 
@@ -59,18 +58,23 @@ def _read_variants(bgenfile, cache_filepath, cache, verbose):
 
     if cache:
         if cache_filepath is None:
-            variants = read_variants(bgenfile, indexing)
+            variants = read_variants(bgenfile, indexing, verbose)
         elif os.path.exists(cache_filepath):
             variants = load_variants(bgenfile, cache_filepath, indexing,
                                      verbose)
         else:
-            variants = read_variants(bgenfile, indexing)
+            variants = read_variants(bgenfile, indexing, verbose)
             store_variants(bgenfile, variants, indexing[0], cache_filepath)
     else:
-        variants = read_variants(bgenfile, indexing)
+        variants = read_variants(bgenfile, indexing, verbose)
 
     data = dict(id=[], rsid=[], chrom=[], pos=[], nalleles=[], allele_ids=[])
-    for i in range(nvariants):
+    desc = "Mapping variants"
+    bf = "{desc}|{bar}|"
+    dis = verbose == 0
+    for i in tqdm(
+            range(nvariants), ascii=True, desc=desc, disable=dis,
+            bar_format=bf):
         data['id'].append(_to_string(variants[i].id))
         data['rsid'].append(_to_string(variants[i].rsid))
         data['chrom'].append(_to_string(variants[i].chrom))
@@ -86,10 +90,10 @@ def _read_variants(bgenfile, cache_filepath, cache, verbose):
     return (DataFrame(data=data), indexing)
 
 
-def _read_samples(bgenfile):
+def _read_samples(bgenfile, verbose):
 
     nsamples = get_nsamples(bgenfile)
-    samples = read_samples(bgenfile)
+    samples = read_samples(bgenfile, verbose)
 
     py_ids = []
     for i in range(nsamples):
@@ -134,16 +138,15 @@ class ReadGenotypeVariant(object):
         return G
 
 
-def _read_genotype(indexing, nsamples, nvariants, nalleless, size, verbose):
+def _read_genotype(indexing, nsamples, nvariants, nalleless, size):
 
     genotype = []
     rgv = ReadGenotypeVariant(indexing)
 
     c = int((1024 * 1024 * size) // nsamples)
     step = min(c, nvariants)
-    tqdm_kwds = dict(desc='Variant mapping', disable=not verbose)
 
-    for i in tqdm(range(0, nvariants, step), **tqdm_kwds):
+    for i in range(0, nvariants, step):
         size = min(step, nvariants - i)
         tup = nsamples, nalleless[i:i + size], i, size
         delayed_kwds = dict(pure=True, traverse=False)
@@ -187,8 +190,8 @@ def read_bgen(filepath, size=50, verbose=True, cache=True):
             pass
 
     if (not os.path.exists(filepath)):
-        raise FileNotFoundError(errno.ENOENT,
-                                os.strerror(errno.ENOENT), filepath)
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT),
+                                filepath)
 
     if not _group_readable(filepath):
         msg = "You don't have file"
@@ -218,7 +221,7 @@ def read_bgen(filepath, size=50, verbose=True, cache=True):
             print(msg)
         samples = _generate_samples(bgenfile)
     else:
-        samples = _read_samples(bgenfile)
+        samples = _read_samples(bgenfile, verbose)
 
     if verbose:
         sys.stdout.write(
@@ -238,8 +241,7 @@ def read_bgen(filepath, size=50, verbose=True, cache=True):
     nvariants = variants.shape[0]
     close_bgen(bgenfile)
 
-    genotype = _read_genotype(indexing, nsamples, nvariants, nalleless, size,
-                              verbose)
+    genotype = _read_genotype(indexing, nsamples, nvariants, nalleless, size)
 
     return dict(variants=variants, samples=samples, genotype=genotype)
 
